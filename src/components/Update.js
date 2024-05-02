@@ -3,14 +3,24 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
-import { RadiusBottomrightOutlined } from "@ant-design/icons";
 import { Spin } from "antd";
 import { notification } from "antd";
+
+import { useDispatch, useSelector } from "react-redux";
+import { setName, setEmail } from "./app/Reducers/Slice";
+
 const Context = React.createContext({
   name: "Default",
 });
 
 export default function Update() {
+  const dispatch = useDispatch();
+  const { name: storedName, email: storedEmail } = useSelector(
+    (state) => state.update
+  );
+  const [name, setName] = useState(storedName);
+  const [email, setEmail] = useState(storedEmail);
+
   const [spinning, setSpinning] = React.useState(false);
   const showLoader = () => {
     setSpinning(true);
@@ -20,8 +30,8 @@ export default function Update() {
   };
 
   const [id, setId] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  // const [name, setName] = useState("");
+  // const [email, setEmail] = useState("");
 
   const history = useNavigate();
 
@@ -62,6 +72,10 @@ export default function Update() {
         `https://662618a0052332d5532199ae.mockapi.io/practice_01/${id}`,
         { name: name, email: email }
       );
+
+      // dispatch(setName(name));
+      // dispatch(setEmail(email));
+
       notification.success({ message: "Update Successful" });
       history("/read");
     } catch (error) {
@@ -118,11 +132,7 @@ export default function Update() {
           </div>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={handleUpdate}
-          // icon={<RadiusBottomrightOutlined />}
-        >
+        <button className="btn btn-primary" onClick={handleUpdate}>
           Update
         </button>
         <Spin spinning={spinning} fullscreen />

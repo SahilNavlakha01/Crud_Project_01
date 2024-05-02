@@ -2,89 +2,95 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { Link } from "react-router-dom";
-import { Button } from "antd";
-import { useMemo } from "react";
-import { notification } from "antd";
-import { Spin } from "antd";
-import { Checkbox } from 'antd';
-const Context = React.createContext({
-  name: "Default",
-});
+import { Button, notification, Spin, Checkbox } from "antd";
+import { Radio } from "antd";
+import { DatePicker, Space } from "antd";
+import { useDispatch } from "react-redux";
+
+import { InputNumber } from "antd";
+
+const onChange = (date, dateString) => {
+  console.log(date, dateString);
+};
 
 export default function Create() {
-  const [spinning, setSpinning] = React.useState(false);
+  const dispatch = useDispatch();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [spinning, setSpinning] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const navigate = useNavigate();
+  const [isChecked, setIsChecked] = useState(false);
+  const [gender, setGender] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [age, setAge] = useState("");
+
+  const handleSubmit = async () => {
+    if (!name.trim() || !email.trim() || !isChecked) {
+      notification.error({
+        message: "Please fill out all fields and check the checkbox.",
+      });
+      return;
+    }
+
+    try {
+      setLoader(true);
+      await axios.post(
+        "https://662618a0052332d5532199ae.mockapi.io/practice_01",
+        {
+          name: name,
+          email: email,
+          gender: gender,
+          age: age,
+          selectedDate: selectedDate,
+        }
+      );
+
+      notification.success({ message: "Data Created Successfully" });
+      navigate("/read");
+
+      
+    } catch (error) {
+      console.error("Error creating data:", error);
+      notification.error({ message: "Failed to create data" });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   const showLoader = () => {
     setSpinning(true);
     setTimeout(() => {
       setSpinning(false);
     }, 3000);
   };
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
 
-  const [api] = notification.useNotification();
-  const openNotification = (placement) => {
-    api.info({
-      message: `Notification ${placement}`,
-      description: (
-        <Context.Consumer>{({ name }) => `Hello, ${name}!`}</Context.Consumer>
-      ),
-      placement,
-    });
+  // Get Gender
+  const handleRadioChange = (e) => {
+    setGender(e.target.value);
   };
-  const contextValue = useMemo(
-    () => ({
-      name: "Ant Design",
-    }),
-    []
-  );
 
-  const [loader, setLoader] = useState(false);
-
-  const navigate = useNavigate();
-
-  const handleSubmit = async () => {
-    try {
-      setLoader(true); // Set loader to true to indicate that the operation is in progress
-      await axios.post(
-        "https://662618a0052332d5532199ae.mockapi.io/practice_01",
-        {
-          name: name,
-          email: email,
-        }
-      );
-      notification.success({ message: "Data Created Successfully" });
-      navigate("/read");
-    } catch (error) {
-      console.error("Error creating data:", error);
-      notification.error({ message: "Failed to create data" });
-    } finally {
-      setLoader(false); // Reset loader to false after the operation completes
+  // Get Date
+  const handleDateChange = (date, dateString) => {
+    if (dateString) {
+      const [year, month, day] = dateString.split("-");
+      const formattedDate = `${day}-${month}-${year}`; // Reformat the date string to dd-mm-yyyy
+      setSelectedDate(formattedDate); // Update the state with the selected date
+    } else {
+      setSelectedDate(null); // Handle case when dateString is null
     }
   };
 
-  const [loadings, setLoadings] = useState([]);
-  const enterLoading = (index) => {
-    setLoadings((prevLoadings) => {
-      const newLoadings = [...prevLoadings];
-      newLoadings[index] = true;
-      return newLoadings;
-    });
-    setTimeout(() => {
-      setLoadings((prevLoadings) => {
-        const newLoadings = [...prevLoadings];
-        newLoadings[index] = false;
-        return newLoadings;
-      });
-    }, 6000);
+  // Checkbox change handler
+  const handleCheckboxChange = (e) => {
+    setIsChecked(e.target.checked);
   };
 
-  
-const onChange = (e) => {
-  console.log(`checked = ${e.target.checked}`);
-
-};
- 
+  // Get Age
+  const handleAgeChange = (value) => {
+    console.log("changed", value);
+    setAge(value);
+  };
 
   return (
     <>
@@ -125,32 +131,37 @@ const onChange = (e) => {
             We'll never share your email with anyone else.!
           </div>
         </div>
-
-        {/* <button
-          type="submit"
-          className="btn btn-primary"
-          onClick={handleSubmit}
-        >
-          Submit
-        </button> */}
-        {/* <Button
-          type="primary"
-          icon={<PoweroffOutlined />}
-          loading={loadings[1]}
-          onClick={() => {
-            handleSubmit();
-          }}
-        >
-          Submit!
-        </Button> */}
-        <Checkbox onChange={onChange}>Agree ?</Checkbox>
+        <Radio.Group onChange={handleRadioChange} value={gender}>
+          <Radio value="Male">Male</Radio>
+          <Radio value="Female">Female</Radio>
+          <Radio value="Other">Other</Radio>
+        </Radio.Group>
+        <br />
+        <br />
+        <Space direction="vertical">
+          <label htmlFor="">Select Date : </label>
+          <DatePicker format="DD-MM-YYYY" onChange={handleDateChange} />
+        </Space>
+        <br />
+        <br />
+        <InputNumber
+          min={18}
+          max={50}
+          defaultValue={18}
+          onChange={handleAgeChange}
+          value={age}
+        />
+        <br />
+        <br />
+        <Checkbox required onChange={handleCheckboxChange}>
+          Agree?
+        </Checkbox>
         <br />
         <br />
         <Button
           onClick={() => {
             handleSubmit();
             showLoader();
-           
           }}
           className="btn btn-primary"
         >
